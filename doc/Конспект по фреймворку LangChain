@@ -1,0 +1,186 @@
+# Конспект по фреймворку LangChain
+
+**LangChain** — это open-source фреймворк для разработки приложений, использующих большие языковые модели (LLM). Он упрощает интеграцию LLM с внешними данными, инструментами и памятью контекста, позволяя создавать сложные приложения, такие как чат-боты, агенты и системы обработки данных. Основная идея — предоставить модульную структуру для работы с LLM, инструментами, памятью и внешними источниками данных.
+
+---
+
+## Основные компоненты LangChain
+
+1. **LLM и Chat Models**:
+   - LangChain поддерживает интеграцию с различными языковыми моделями (например, OpenAI, Hugging Face, Anthropic).
+   - `LLM`: для генерации текста (например, GPT-3).
+   - `Chat Models`: для диалоговых сценариев, где есть роли (система, пользователь, ассистент).
+   - Пример вызова:
+     ```python
+     from langchain.llms import OpenAI
+     llm = OpenAI(model_name="gpt-3.5-turbo")
+     response = llm("Привет, как дела?")
+     ```
+
+2. **Prompt Templates**:
+   - Шаблоны для структурирования запросов к LLM.
+   - Позволяют динамически подставлять данные в промпты.
+   - Пример:
+     ```python
+     from langchain.prompts import PromptTemplate
+     template = PromptTemplate(input_variables=["question"], template="Ответь на вопрос: {question}")
+     prompt = template.format(question="Какой сегодня день?")
+     ```
+
+3. **Memory (Память)**:
+   - Хранит контекст разговора для поддержания связности диалога.
+   - Типы памяти:
+     - `ConversationBufferMemory`: хранит полный текст диалога.
+     - `ConversationSummaryMemory`: суммирует диалог для экономии токенов.
+     - `ConversationBufferWindowMemory`: хранит последние k сообщений.
+   - Пример:
+     ```python
+     from langchain.memory import ConversationBufferMemory
+     memory = ConversationBufferMemory()
+     memory.save_context({"input": "Привет"}, {"output": "Здравствуй!"})
+     ```
+
+4. **Tools (Инструменты)**:
+   - Интеграция LLM с внешними API, базами данных, поисковиками и т.д.
+   - Примеры: запуск shell-команд, поиск в интернете, доступ к файлам.
+   - Пример:
+     ```python
+     from langchain.tools import Tool
+     tool = Tool(name="run_shell", func=lambda x: subprocess.run(x, shell=True, capture_output=True, text=True).stdout, description="Run a shell command")
+     ```
+
+5. **Agents (Агенты)**:
+   - Агенты используют LLM для принятия решений о том, какие действия выполнить.
+   - Основные типы:
+     - `ReAct` (Reasoning + Acting): комбинирует размышления и действия.
+     - `Zero-shot ReAct`: работает без примеров, только на основе описания инструментов.
+   - Пример:
+     ```python
+     from langchain.agents import initialize_agent, AgentType
+     agent = initialize_agent(tools=[tool], llm=llm, agent=AgentType.REACT, max_iterations=3)
+     result = agent.run("выведи время на хосте")
+     ```
+
+6. **Chains (Цепочки)**:
+   - Последовательность действий, комбинирующих LLM, инструменты и память.
+   - Пример: цепочка для ответа на вопрос с использованием памяти и шаблона промпта.
+   - Пример:
+     ```python
+     from langchain.chains import LLMChain
+     chain = LLMChain(llm=llm, prompt=template, memory=memory)
+     response = chain.run(question="Какой сегодня день?")
+     ```
+
+7. **Indexes и Vector Stores**:
+   - Используются для работы с внешними данными (например, текстами, документами).
+   - Поддерживают поиск по векторным представлениям (например, с помощью `FAISS` или `Chroma`).
+   - Пример:
+     ```python
+     from langchain.vectorstores import FAISS
+     from langchain.embeddings import OpenAIEmbeddings
+     embeddings = OpenAIEmbeddings()
+     vectorstore = FAISS.from_texts(["Текст 1", "Текст 2"], embeddings)
+     ```
+
+8. **Document Loaders**:
+   - Загрузка данных из файлов (PDF, CSV, текстовые файлы) или веб-страниц.
+   - Пример:
+     ```python
+     from langchain.document_loaders import TextLoader
+     loader = TextLoader("file.txt")
+     documents = loader.load()
+     ```
+
+---
+
+## Основные сценарии использования
+
+1. **Чат-боты с контекстом**:
+   - Используют память для поддержания диалога.
+   - Пример: чат-бот, который помнит предыдущие вопросы пользователя.
+
+2. **Агенты с доступом к инструментам**:
+   - Выполнение задач, требующих взаимодействия с внешними системами (например, запуск команд, поиск в интернете).
+   - Пример: агент, выполняющий команду `date` для получения времени.
+
+3. **Обработка документов**:
+   - Извлечение информации из больших текстов или баз знаний с помощью векторных хранилищ.
+   - Пример: поиск ответа в документации по ключевым словам.
+
+4. **Автоматизация задач**:
+   - Комбинирование LLM с инструментами для автоматизации процессов (например, анализ данных, генерация отчетов).
+
+---
+
+## Ключевые возможности
+
+- **Модульность**: LangChain позволяет комбинировать компоненты (LLM, инструменты, память) для создания сложных приложений.
+- **Интеграция**: Поддерживает множество LLM, инструментов и хранилищ данных.
+- **Гибкость**: Можно настраивать поведение агентов, ограничивать итерации, кастомизировать промпты.
+- **Экосистема**: LangChain активно развивается, поддерживает множество расширений (например, LangSmith для отладки).
+
+---
+
+## Пример настройки агента
+
+Для ограничения количества размышлений (как в вашем вопросе):
+```python
+from langchain.agents import AgentExecutor, initialize_agent
+from langchain.llms import OpenAI
+from langchain.tools import Tool
+import subprocess
+
+# Инициализация LLM
+llm = OpenAI(model_name="gpt-3.5-turbo")
+
+# Определение инструмента
+tools = [
+    Tool(
+        name="run_shell",
+       .
+        func=lambda x: subprocess.run(x, shell=True, capture_output=True, text=True).stdout,
+        description="Run a shell command and return its output"
+    )
+]
+
+# Инициализация агента с ограничением итераций
+agent = initialize_agent(tools=tools, llm=llm, agent=AgentType.REACT, verbose=True)
+executor = AgentExecutor(agent=agent, tools=tools, max_iterations=1)
+
+# Запуск
+result = executor.run("выведи время на хосте")
+print(result)
+```
+
+---
+
+## Полезные советы
+
+1. **Ограничение итераций**:
+   - Используйте `max_iterations` или кастомные условия остановки, чтобы избежать лишних циклов.
+   - Пример: `max_iterations=1` для простых задач, таких как `date`.
+
+2. **Отладка**:
+   - Включите `verbose=True` для просмотра шагов агента (Thought, Action, Observation).
+   - Используйте LangSmith для более глубокой отладки.
+
+3. **Оптимизация промптов**:
+   - Пишите чёткие инструкции в промптах, чтобы агент быстрее понимал задачу.
+   - Пример: "Верни результат сразу после выполнения команды, если он валиден."
+
+4. **Кэширование**:
+   - Используйте кэширование результатов для повторяющихся запросов, чтобы сократить затраты на API.
+
+5. **Обработка ошибок**:
+   - Добавляйте обработку исключений в инструментах, чтобы агент не завершался с ошибкой.
+
+---
+
+## Ресурсы
+
+- **Официальная документация**: [LangChain Docs](https://python.langchain.com/docs/get_started/introduction)
+- **GitHub**: [LangChain Repository](https://github.com/langchain-ai/langchain)
+- **LangSmith**: Инструмент для отладки и мониторинга LangChain-приложений.
+- **Примеры**: [LangChain Tutorials](https://python.langchain.com/docs/use_cases/)
+
+LangChain — мощный инструмент для создания интеллектуальных приложений с LLM, который позволяет гибко комбинировать модели, данные и инструменты. Настройка параметров, таких как количество итераций, помогает оптимизировать поведение агентов для конкретных задач.
